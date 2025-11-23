@@ -40,10 +40,17 @@ public class BitmapCompressor {
             boolean bit = BinaryStdIn.readBoolean();
             if (current) {
                 if (!bit) {
+                    // Edge case where the # goes above 255. Simply print extra numbers.
+                    if (sequence_length >= 255) {
+                        BinaryStdOut.write(255, 8);
+                        sequence_length -= 255;
+                        BinaryStdOut.write(0, 8);
+                    }
                     sequence_length++;
                 }
                 else {
-                    BinaryStdOut.write(sequence_length, 16);
+                    // Output with 8 bits to improve compression but avoid illegal ints
+                    BinaryStdOut.write(sequence_length, 8);
                     // Set sequence length to 1 to count the bit we are looking at right now
                     sequence_length = 1;
                     // Swap between 1s and 0s
@@ -52,16 +59,21 @@ public class BitmapCompressor {
             }
             else {
                 if (bit) {
+                    if (sequence_length >= 255) {
+                        BinaryStdOut.write(255, 8);
+                        sequence_length -= 255;
+                        BinaryStdOut.write(0, 8);
+                    }
                     sequence_length++;
                 }
                 else {
-                    BinaryStdOut.write(sequence_length, 16);
+                    BinaryStdOut.write(sequence_length, 8);
                     sequence_length = 1;
                     current = true;
                 }
             }
         }
-        BinaryStdOut.write(sequence_length, 16);
+        BinaryStdOut.write(sequence_length, 8);
         BinaryStdOut.close();
     }
 
@@ -74,8 +86,8 @@ public class BitmapCompressor {
         boolean isOne = false;
         // Don't need to sorry about padding bits because the Shorts have bit sizes that are multiples of 4.
         while (!BinaryStdIn.isEmpty()) {
-            // Read in the data 16 bits at a time, the length of a short
-            short runLength = (short) BinaryStdIn.readInt(16);
+            // Read in the data 8 bits at a time, the length of the compressed numbers
+            short runLength = (short) BinaryStdIn.readInt(8);
             for (int i = 0; i < runLength; i++) {
                 if (isOne) {
                     BinaryStdOut.write(1, 1);
